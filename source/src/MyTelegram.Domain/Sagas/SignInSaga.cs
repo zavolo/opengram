@@ -5,10 +5,11 @@ public class SignInSaga :
     ISagaIsStartedBy<AppCodeAggregate, AppCodeId, CheckSignInCodeCompletedEvent>,
     ISagaHandles<UserAggregate, UserId, CheckUserStatusCompletedEvent>,
     IApply<SignInSuccessSagaEvent>,
-    IApply<SignUpRequiredSagaEvent>
+    IApply<SignUpRequiredSagaEvent>,
+    IApply<SignInFailedSagaEvent>
 {
     private readonly SignInSagaState _state = new();
-
+    
     public SignInSaga(SignInSagaId id, IEventStore eventStore) : base(id, eventStore)
     {
         Register(_state);
@@ -19,10 +20,26 @@ public class SignInSaga :
         CompleteAsync();
     }
 
+    public void Apply(SignUpRequiredSagaEvent aggregateEvent)
+    {
+        CompleteAsync();
+    }
+
+    public void Apply(SignInFailedSagaEvent aggregateEvent)
+    {
+        CompleteAsync();
+    }
+
     public Task HandleAsync(IDomainEvent<UserAggregate, UserId, CheckUserStatusCompletedEvent> domainEvent,
         ISagaContext sagaContext,
         CancellationToken cancellationToken)
     {
+        if (domainEvent.AggregateEvent.IsUserLocked)
+        {
+            Emit(new SignInFailedSagaEvent(_state.RequestInfo, "USER_DEACTIVATED"));
+            return Task.CompletedTask;
+        }
+
         Emit(new SignInSuccessSagaEvent(_state.RequestInfo,
             _state.RequestInfo.AuthKeyId,
             _state.RequestInfo.PermAuthKeyId,
@@ -33,7 +50,7 @@ public class SignInSaga :
             domainEvent.AggregateEvent.FirstName,
             domainEvent.AggregateEvent.LastName,
             domainEvent.AggregateEvent.HasPassword));
-
+        
         return Task.CompletedTask;
     }
 
@@ -43,24 +60,40 @@ public class SignInSaga :
     {
         if (!domainEvent.AggregateEvent.IsCodeValid)
         {
-            await CompleteAsync(cancellationToken);
-            RpcErrors.RpcErrors400.PhoneCodeInvalid.ThrowRpcError();
+            Emit(new SignInFailedSagaEvent(domainEvent.AggregateEvent.RequestInfo, "PHONE_CODE_INVALID"));
+            return;
         }
-
+        
         if (domainEvent.AggregateEvent.UserId == 0)
         {
             Emit(new SignUpRequiredSagaEvent(domainEvent.AggregateEvent.RequestInfo));
             return;
         }
-
         Emit(new SignInStartedSagaEvent(domainEvent.AggregateEvent.RequestInfo));
-        var checkUserStatusCommand = new CheckUserStatusCommand(UserId.Create(domainEvent.AggregateEvent.UserId),
-            domainEvent.AggregateEvent.RequestInfo);
+        var userId = UserId.Create(domainEvent.AggregateEvent.UserId);
+        var checkUserStatusCommand = new CheckUserStatusCommand(userId, domainEvent.AggregateEvent.RequestInfo);
         Publish(checkUserStatusCommand);
     }
+}
 
-    public void Apply(SignUpRequiredSagaEvent aggregateEvent)
+public class SignInSagaState : AggregateState<SignInSaga, SignInSagaId, SignInSagaState>,
+    IApply<SignInStartedSagaEvent>
+{
+    public RequestInfo RequestInfo { get; private set; } = null!;
+
+    public void Apply(SignInStartedSagaEvent aggregateEvent)
     {
-        CompleteAsync();
+        RequestInfo = aggregateEvent.RequestInfo;
+    }
+}
+
+public class SignInFailedSagaEvent : RequestAggregateEvent2<SignInSaga, SignInSagaId>
+{
+    public string ErrorCode { get; }
+   
+    public SignInFailedSagaEvent(RequestInfo requestInfo, string errorCode)
+        : base(requestInfo)
+    {
+        ErrorCode = errorCode;
     }
 }

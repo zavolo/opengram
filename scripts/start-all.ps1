@@ -1,4 +1,5 @@
 # For more information,please visit https://github.com/loyldg/mytelegram
+$env:App__Brand=Opengram
 $env:App__QueryServerEventStoreDatabaseName = "tg-1"
 $env:App__QueryServerReadModelDatabaseName = "tg-1"
 $env:App__DatabaseName = "tg"
@@ -46,6 +47,7 @@ $env:App__Servers__3__Enabled = "True"
 # $env:VonageSms__Enabled=False
 
 # App
+# $env:App__Brand=Opengram
 # $env:App=
 # $env:App__AllowedUserIds__0=2000001
 # $env:App__AutoCreateSuperGroup=True

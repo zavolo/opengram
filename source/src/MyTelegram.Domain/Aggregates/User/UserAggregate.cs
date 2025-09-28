@@ -10,6 +10,17 @@ public class UserAggregate : MyInMemorySnapshotAggregateRoot<UserAggregate, User
         Register(_state);
     }
 
+    public void SetPrivacy(RequestInfo requestInfo, IInputPrivacyKey key, IReadOnlyList<IInputPrivacyRule> rules)
+    {
+        Specs.AggregateIsCreated.ThrowDomainErrorIfNotSatisfied(this);
+        Emit(new PrivacyRulesChangedEvent(requestInfo, _state.UserId, key, rules));
+    }
+
+    public void UpdateUserScamStatus(bool scam)
+    {
+        Specs.AggregateIsCreated.ThrowDomainErrorIfNotSatisfied(this);
+        Emit(new UserScamStatusChangedEvent(_state.UserId, _state.PhoneNumber, scam));
+    }
 
     public void UpdateAbout(string? about)
     {
@@ -187,7 +198,9 @@ public class UserAggregate : MyInMemorySnapshotAggregateRoot<UserAggregate, User
             _state.PersonalChannelId,
             _state.Birthday,
             _state.ProfilePhotoUpdateDate,
-            _state.UserNameUpdateDate
+            _state.UserNameUpdateDate,
+            _state.Scam,
+            _state.PrivacyRules
         ));
     }
 

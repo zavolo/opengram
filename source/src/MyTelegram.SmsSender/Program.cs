@@ -35,11 +35,13 @@ builder.ConfigureServices((context,
     services) =>
 {
     services.Configure<TwilioSmsOptions>(context.Configuration.GetRequiredSection("TwilioSms"));
+    services.Configure<WebSmsOptions>(context.Configuration.GetRequiredSection("WebSms"));
     services.Configure<EventBusRabbitMqOptions>(context.Configuration.GetRequiredSection("RabbitMQ:EventBus"));
     services.Configure<RabbitMqOptions>(context.Configuration.GetRequiredSection("RabbitMQ:Connections:Default"));
 
     services.AddMyTelegramSmsSender();
     services.AddMyTelegramRabbitMqEventBus();
+    services.AddHttpClient();
 });
 
 var app = builder.Build();

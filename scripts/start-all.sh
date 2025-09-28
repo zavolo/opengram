@@ -1,5 +1,6 @@
 #!/bin/sh
 # For more information,please visit https://github.com/loyldg/mytelegram
+export App__Brand=Opengram
 export App__QueryServerEventStoreDatabaseName=tg-1
 export App__QueryServerReadModelDatabaseName=tg-1
 export App__DatabaseName=tg
@@ -46,6 +47,7 @@ export App__Servers__3__Enabled=True
 # export VonageSms__Enabled=False
 
 # App
+# export App__Brand=Opengram
 # export App__AllowedUserIds__0=2000001
 # export App__AutoCreateSuperGroup=True
 # export App__BotDatabaseName=tg

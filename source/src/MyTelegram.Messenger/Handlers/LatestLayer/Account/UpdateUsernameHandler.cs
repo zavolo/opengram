@@ -1,5 +1,4 @@
 ﻿namespace MyTelegram.Messenger.Handlers.LatestLayer.Account;
-
 ///<summary>
 /// Changes username for the current user.
 /// <para>Possible errors</para>
@@ -14,13 +13,29 @@ internal sealed class UpdateUsernameHandler(
     ICommandBus commandBus,
     IQueryProcessor queryProcessor,
     IUserAppService userAppService,
-    IUsernameHelper usernameHelper
+    IUsernameHelper usernameHelper,
+    IOptionsMonitor<MyTelegramDataSeederOptions> options
     )
     : RpcResultObjectHandler<MyTelegram.Schema.Account.RequestUpdateUsername, MyTelegram.Schema.IUser>
 {
     protected override async Task<IUser> HandleCoreAsync(IRequestInput input,
         MyTelegram.Schema.Account.RequestUpdateUsername obj)
     {
+        var userReadModel = await userAppService.GetAsync(input.UserId);
+        var oldUserName = userReadModel.UserName;
+        
+        if (!string.IsNullOrEmpty(oldUserName) && 
+            options.CurrentValue.ProtectedUsernames.Contains(oldUserName, StringComparer.OrdinalIgnoreCase))
+        {
+            RpcErrors.RpcErrors400.UsernameNotModified.ThrowRpcError();
+        }
+       
+        if (!string.IsNullOrEmpty(obj.Username) && 
+            options.CurrentValue.ProtectedUsernames.Contains(obj.Username, StringComparer.OrdinalIgnoreCase))
+        {
+            RpcErrors.RpcErrors400.UsernamePurchaseAvailable.ThrowRpcError();
+        }
+        
         if (!string.IsNullOrEmpty(obj.Username))
         {
             if (!usernameHelper.IsValidUsername(obj.Username))
@@ -28,22 +43,19 @@ internal sealed class UpdateUsernameHandler(
                 RpcErrors.RpcErrors400.UsernameInvalid.ThrowRpcError();
             }
         }
-
-        var userReadModel=await userAppService.GetAsync(input.UserId);
-        var oldUserName = userReadModel.UserName;
+        
         if (string.Equals(obj.Username, oldUserName, StringComparison.OrdinalIgnoreCase))
         {
             RpcErrors.RpcErrors400.UsernameNotModified.ThrowRpcError();
-        }
-
+        }        
+        
         var command = new SetUserNameCommand(UserNameId.Create(obj.Username.ToLower()),
             input.ToRequestInfo(),
             input.UserId.ToUserPeer(),
             obj.Username,
             oldUserName
-            );
+        );
         await commandBus.PublishAsync(command);
-
         return null!;
     }
 }

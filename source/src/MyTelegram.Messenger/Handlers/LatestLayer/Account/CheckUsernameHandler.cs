@@ -9,7 +9,10 @@
 /// 400 USERNAME_PURCHASE_AVAILABLE The specified username can be purchased on <a href="https://fragment.com/">https://fragment.com</a>.
 /// See <a href="https://corefork.telegram.org/method/account.checkUsername" />
 ///</summary>
-internal sealed class CheckUsernameHandler(IQueryProcessor queryProcessor, IUsernameHelper usernameHelper)
+internal sealed class CheckUsernameHandler(
+    IQueryProcessor queryProcessor, 
+    IUsernameHelper usernameHelper,
+    IOptionsMonitor<MyTelegramDataSeederOptions> options)
     : RpcResultObjectHandler<MyTelegram.Schema.Account.RequestCheckUsername, IBool>
 {
     protected override async Task<IBool> HandleCoreAsync(IRequestInput input,
@@ -23,13 +26,19 @@ internal sealed class CheckUsernameHandler(IQueryProcessor queryProcessor, IUser
                 RpcErrors.RpcErrors400.UsernameInvalid.ThrowRpcError();
             }
         }
+        
+        if (!string.IsNullOrEmpty(obj.Username) && 
+            options.CurrentValue.ProtectedUsernames.Contains(obj.Username, StringComparer.OrdinalIgnoreCase))
+        {
+            RpcErrors.RpcErrors400.UsernamePurchaseAvailable.ThrowRpcError();
+        }
 
         var userNameReadModel = await queryProcessor.ProcessAsync(new GetUserNameByNameQuery(obj.Username.ToLower()));
         if (userNameReadModel == null)
         {
             return new TBoolTrue();
         }
-
+        
         return new TBoolFalse();
     }
 }

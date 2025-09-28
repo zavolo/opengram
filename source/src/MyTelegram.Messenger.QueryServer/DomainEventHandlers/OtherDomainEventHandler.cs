@@ -2,6 +2,7 @@
 using MyTelegram.Domain.Events.PeerNotifySettings;
 using MyTelegram.Messenger.Extensions;
 using MyTelegram.Messenger.Services.Interfaces;
+using ResponseCacheManager = MyTelegram.Services.Services.IResponseCacheManager;
 
 namespace MyTelegram.Messenger.QueryServer.DomainEventHandlers;
 
@@ -16,7 +17,8 @@ public class OtherDomainEventHandler(
     IUpdatesConverterService updatesConverterService,
     IUserConverterService userConverterService,
     ILayeredService<IAuthorizationConverter> layeredAuthorizationService,
-    ICacheManager<GlobalPrivacySettingsCacheItem> cacheManager)
+    ICacheManager<GlobalPrivacySettingsCacheItem> cacheManager,
+    ResponseCacheManager responseCacheManager)
     : DomainEventHandlerBase(objectMessageSender,
             commandBus,
             idGenerator,
@@ -106,6 +108,8 @@ public class OtherDomainEventHandler(
 
         if (domainEvent.AggregateEvent.HasPassword)
         {
+		    var error = RpcErrors.RpcErrors401.SessionPasswordNeeded.ToRpcError();
+			await responseCacheManager.SetResponseAsync(domainEvent.AggregateEvent.RequestInfo.ReqMsgId, error);
             await SendRpcMessageToClientAsync(domainEvent.AggregateEvent.RequestInfo, RpcErrors.RpcErrors401.SessionPasswordNeeded.ToRpcError());
             return;
         }
@@ -113,6 +117,8 @@ public class OtherDomainEventHandler(
         var user = await userConverterService.GetUserAsync(domainEvent.AggregateEvent.RequestInfo, userId, layer: domainEvent.AggregateEvent.RequestInfo.Layer);
         var r = layeredAuthorizationService.GetConverter(domainEvent.AggregateEvent.RequestInfo.Layer)
             .CreateAuthorization(user);
+
+        await responseCacheManager.SetResponseAsync(domainEvent.AggregateEvent.RequestInfo.ReqMsgId, r);
 
         await _objectMessageSender.SendRpcMessageToClientAsync(domainEvent.AggregateEvent.RequestInfo,
             r,

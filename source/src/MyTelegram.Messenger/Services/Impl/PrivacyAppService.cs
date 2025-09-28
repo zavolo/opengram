@@ -1,8 +1,12 @@
-﻿namespace MyTelegram.Messenger.Services.Impl;
+﻿using MyTelegram.Domain.Commands.User;
+using MyTelegram.ReadModel.Impl;
+
+namespace MyTelegram.Messenger.Services.Impl;
 
 public class PrivacyAppService(
     ICacheManager<GlobalPrivacySettingsCacheItem> cacheManager,
-    IQueryProcessor queryProcessor)
+    IQueryProcessor queryProcessor,
+    ICommandBus commandBus)
     : BaseAppService, IPrivacyAppService, ITransientDependency
 {
     public Task<IReadOnlyCollection<IPrivacyReadModel>> GetPrivacyListAsync(IReadOnlyList<long> userIds)
@@ -26,11 +30,17 @@ public class PrivacyAppService(
         return Task.CompletedTask;
     }
 
-    public Task<IReadOnlyList<IPrivacyRule>> GetPrivacyRulesAsync(long selfUserId,
-        IInputPrivacyKey key)
+    public async Task<IReadOnlyList<IPrivacyRule>> GetPrivacyRulesAsync(long selfUserId, IInputPrivacyKey key)
     {
-        return Task.FromResult<IReadOnlyList<IPrivacyRule>>(Array.Empty<IPrivacyRule>());
+        var userReadModel = await queryProcessor.ProcessAsync(new GetUserByIdQuery(selfUserId), default);
+        var keyName = key.GetType().Name;
 
+        if (userReadModel?.PrivacyRules != null && userReadModel.PrivacyRules.TryGetValue(keyName, out var rules))
+        {
+            return rules;
+        }
+
+        return Array.Empty<IPrivacyRule>();
     }
 
     public Task ApplyPrivacyListAsync(long selfUserId, IReadOnlyList<long> targetUserIdList, Action<PrivacyValueType, long> executeOnPrivacyNotMatch,
@@ -69,12 +79,42 @@ public class PrivacyAppService(
         return [];
     }
 
-    public Task<SetPrivacyOutput> SetPrivacyAsync(RequestInfo requestInfo,
-        long selfUserId,
-        IInputPrivacyKey key,
-        IReadOnlyList<IInputPrivacyRule> ruleList)
+    public async Task<SetPrivacyOutput> SetPrivacyAsync(RequestInfo requestInfo,
+                                        long selfUserId,
+                                        IInputPrivacyKey key,
+                                        IReadOnlyList<IInputPrivacyRule> ruleList)
     {
-        return Task.FromResult(new SetPrivacyOutput(new List<IPrivacyRule>()));
+        var command = new SetPrivacyCommand(UserId.Create(selfUserId), requestInfo, key, ruleList);
+        await commandBus.PublishAsync(command, CancellationToken.None);
+
+        var convertedRules = new List<IPrivacyRule>();
+        foreach (var rule in ruleList)
+        {
+            switch (rule)
+            {
+                case TInputPrivacyValueAllowAll:
+                    convertedRules.Add(new TPrivacyValueAllowAll());
+                    break;
+                case TInputPrivacyValueAllowContacts:
+                    convertedRules.Add(new TPrivacyValueAllowContacts());
+                    break;
+                case TInputPrivacyValueAllowUsers allowUsers:
+                    var allowedUserIds = allowUsers.Users.Select(u => u switch { TInputUserSelf => selfUserId, TInputUser user => user.UserId, _ => 0L }).ToList();
+                    convertedRules.Add(new TPrivacyValueAllowUsers { Users = new TVector<long>(allowedUserIds) });
+                    break;
+                case TInputPrivacyValueDisallowAll:
+                    convertedRules.Add(new TPrivacyValueDisallowAll());
+                    break;
+                case TInputPrivacyValueDisallowContacts:
+                    convertedRules.Add(new TPrivacyValueDisallowContacts());
+                    break;
+                case TInputPrivacyValueDisallowUsers disallowUsers:
+                    var disallowedUserIds = disallowUsers.Users.Select(u => u switch { TInputUserSelf => selfUserId, TInputUser user => user.UserId, _ => 0L }).ToList();
+                    convertedRules.Add(new TPrivacyValueDisallowUsers { Users = new TVector<long>(disallowedUserIds) });
+                    break;
+            }
+        }
+        return new SetPrivacyOutput(convertedRules);
     }
 
     public Task ApplyPrivacyAsync(long selfUserId, long targetUserId, Action<PrivacyValueType> executeOnPrivacyNotMatch, PrivacyType privacyType)

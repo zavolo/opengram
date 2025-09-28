@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using MyTelegram.Caching.Redis;
 using MyTelegram.Domain.Aggregates.Device;
@@ -7,6 +9,8 @@ using MyTelegram.EventBus.RabbitMQ.Extensions;
 using MyTelegram.Messenger;
 using MyTelegram.Messenger.CommandServer.BackgroundServices;
 using MyTelegram.Messenger.CommandServer.Extensions;
+using MyTelegram.Messenger.Services.Impl;
+using MyTelegram.Messenger.Services.Interfaces;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using MyTelegramConsts = MyTelegram.MyTelegramConsts;
@@ -92,6 +96,18 @@ builder.ConfigureServices((ctx,
     //    });
     //});
 
+    services.AddHttpClient();
+    if (appConfig?.UsePhpApiForCodes == true)
+    {
+        services.RemoveAll<IVerificationCodeGenerator>();
+        services.AddTransient<IVerificationCodeGenerator, CustomVerificationCodeGenerator>();
+        Log.Information("Using WebSmsSender for verification codes: {Url}", appConfig.CustomPhpApiUrl);
+    }
+    else
+    {
+        Log.Information("Using default verification code generator");
+    }
+
     services.AddMyTelegramMessengerCommandServer(options =>
     {
         options.AddDefaults(Assembly.GetEntryAssembly());
@@ -118,7 +134,13 @@ builder.ConfigureServices((ctx,
     });
 });
 
-
 var app = builder.Build();
+var config = app.Services.GetRequiredService<IOptions<MyTelegramMessengerServerOptions>>().Value;
+if (config.UsePhpApiForCodes)
+{
+    Log.Information("WebSmsSender enabled:");
+    Log.Information("  - API: {Url}", config.CustomPhpApiUrl);
+    Log.Information("  - Key: {HasKey}", !string.IsNullOrEmpty(config.PhpApiServerKey));
+}
 
 await app.RunAsync();

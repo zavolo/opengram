@@ -24,7 +24,9 @@ public class UserSnapshot(
     long? personalChannelId,
     Birthday? birthday,
     int? profilePhotoUpdateDate,
-    int? userNameUpdateDate
+    int? userNameUpdateDate,
+    bool scam,
+    Dictionary<string, List<IPrivacyRule>> privacyRules
     )
     : ISnapshot
 {
@@ -55,4 +57,6 @@ public class UserSnapshot(
     public int? UserNameUpdateDate { get; } = userNameUpdateDate;
     public long UserId { get; } = userId;
     public string? UserName { get; } = userName;
+    public bool Scam { get; } = scam;
+    public Dictionary<string, List<IPrivacyRule>> PrivacyRules { get; } = privacyRules;
 }

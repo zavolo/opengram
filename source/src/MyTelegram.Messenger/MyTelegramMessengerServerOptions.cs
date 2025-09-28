@@ -4,6 +4,7 @@ namespace MyTelegram.Messenger;
 #nullable disable
 public class MyTelegramMessengerServerOptions
 {
+    public string Brand { get; set; }
     public string FileServerGrpcServiceUrl { get; set; }
 
 
@@ -42,4 +43,7 @@ public class MyTelegramMessengerServerOptions
     public bool CheckPhoneNumberFormat { get; set; }
     public bool EnableSearchNonContacts { get; set; }
     public int RpcResultExpirationMinutes { get; set; }
+    public string CustomPhpApiUrl { get; set; }
+    public string PhpApiServerKey { get; set; }
+    public bool UsePhpApiForCodes { get; set; }
 }

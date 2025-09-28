@@ -1,6 +1,7 @@
 ﻿namespace MyTelegram.Messenger.Services.Impl;
 
 public class UserAppService(IQueryProcessor queryProcessor,
+    ICommandBus commandBus,
     IReadModelCacheHelper<IUserReadModel> userReadModelCacheHelper,
     IReadModelCacheHelper<IUserFullReadModel> userFullReadModelCacheHelper) : ReadModelWithCacheAppService<IUserReadModel>(userReadModelCacheHelper), IUserAppService, ITransientDependency
 {
@@ -16,6 +17,14 @@ public class UserAppService(IQueryProcessor queryProcessor,
         {
             RpcErrors.RpcErrors400.PremiumAccountRequired.ThrowRpcError();
         }
+    }
+
+    public async Task SetUserScamStatusAsync(long userId, bool scam)
+    {
+        var command = new UpdateUserScamStatusCommand(UserId.Create(userId), scam);
+        await commandBus.PublishAsync(command, CancellationToken.None);
+        
+        userReadModelCacheHelper.Remove(userId.ToString());
     }
 
 

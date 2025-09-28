@@ -50,4 +50,7 @@ public interface IUserReadModel : IReadModel
     int? ProfilePhotoUpdateDate { get; }
     int? UserNameUpdateDate { get; }
     bool? IsDeleted { get; }
+    bool IsBan { get; }
+    bool Scam { get; }
+    Dictionary<string, List<IPrivacyRule>>? PrivacyRules { get; }
 }

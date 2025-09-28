@@ -1,15 +1,16 @@
 ﻿namespace MyTelegram.SmsSender.EventHandlers;
 
-public class AppCodeEventHandler(ISmsSenderFactory smsSenderFactory, ILogger<AppCodeEventHandler> logger)
+public class AppCodeEventHandler(
+    ISmsSenderFactory smsSenderFactory,
+    ILogger<AppCodeEventHandler> logger,
+    IOptionsMonitor<WebSmsOptions> options)
     : IEventHandler<AppCodeCreatedIntegrationEvent>, ITransientDependency
 {
     public async Task HandleEventAsync(AppCodeCreatedIntegrationEvent eventData)
     {
         var phoneNumber = eventData.PhoneNumber;
         if (!phoneNumber.StartsWith("+"))
-        {
             phoneNumber = $"+{phoneNumber}";
-        }
 
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if (eventData.Expire < now)
@@ -21,7 +22,8 @@ public class AppCodeEventHandler(ISmsSenderFactory smsSenderFactory, ILogger<App
         try
         {
             var smsSender = smsSenderFactory.Create(eventData.PhoneNumber);
-            await smsSender.SendAsync(phoneNumber, $"MyTelegram code: {eventData.Code}");
+            var brand = options.CurrentValue.Brand ?? "Opengram";
+            await smsSender.SendAsync(phoneNumber, $"{brand} code: {eventData.Code}");
         }
         catch (Exception ex)
         {

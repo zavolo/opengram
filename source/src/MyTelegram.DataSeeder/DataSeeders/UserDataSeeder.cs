@@ -77,7 +77,7 @@ public class UserDataSeeder(
         var userId = MyTelegramConsts.DefaultSupportUserId;
         var created = await CreateUserIfNeedAsync(userId,
             MyTelegramConsts.DefaultSupportUserId.ToString(),
-            "MyTelegram Support",
+            $"{options.CurrentValue.Brand} Support",
             null,
             null,
             false);
@@ -89,7 +89,7 @@ public class UserDataSeeder(
 
             var setVerifiedCommand = new SetVerifiedCommand(UserId.Create(userId), true);
             await commandBus.PublishAsync(setVerifiedCommand);
-            logger.LogInformation("MyTelegram support user created successfully");
+            logger.LogInformation($"{options.CurrentValue.Brand} support user created successfully");
         }
     }
 
@@ -105,7 +105,7 @@ public class UserDataSeeder(
         var userId = MyTelegramConsts.OfficialUserId;
         var created = await CreateUserIfNeedAsync(userId,
             "42777",
-            "MyTelegram",
+            options.CurrentValue.Brand,
             null,
             null,
             false);
@@ -117,7 +117,7 @@ public class UserDataSeeder(
 
             var setVerifiedCommand = new SetVerifiedCommand(UserId.Create(userId), true);
             await commandBus.PublishAsync(setVerifiedCommand);
-            logger.LogInformation("MyTelegram notification user created successfully");
+            logger.LogInformation($"{options.CurrentValue.Brand} notification user created successfully");
         }
     }
 }

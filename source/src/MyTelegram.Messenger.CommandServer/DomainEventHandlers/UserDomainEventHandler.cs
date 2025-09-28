@@ -31,7 +31,7 @@ public class UserDomainEventHandler(
 
         if (!domainEvent.AggregateEvent.Bot)
         {
-            var welcomeMessage = "Welcome to use MyTelegram!";
+            var welcomeMessage = "{options.CurrentValue.WelcomeMsg}";
             var sendMessageInput = new SendMessageInput(
                 RequestInfo.Empty with
                 {

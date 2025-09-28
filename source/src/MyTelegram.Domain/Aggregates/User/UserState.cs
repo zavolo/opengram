@@ -17,7 +17,9 @@ public class UserState : AggregateState<UserAggregate, UserId, UserState>,
     IApply<PersonalChannelUpdatedEvent>,
     IApply<BirthdayUpdatedEvent>,
     IApply<UserAboutUpdatedEvent>,
-    IApply<UserFirstNameUpdatedEvent>
+    IApply<UserFirstNameUpdatedEvent>,
+    IApply<UserScamStatusChangedEvent>,
+    IApply<PrivacyRulesChangedEvent>
 {
     public long AccessHash { get; private set; }
     public string FirstName { get; private set; } = null!;
@@ -50,6 +52,41 @@ public class UserState : AggregateState<UserAggregate, UserId, UserState>,
     public Birthday? Birthday { get; private set; }
     public int? ProfilePhotoUpdateDate { get; private set; }
     public int? UserNameUpdateDate { get; private set; }
+    public bool Scam { get; private set; } 
+    public Dictionary<string, List<IPrivacyRule>> PrivacyRules { get; private set; } = new();
+
+    public void Apply(PrivacyRulesChangedEvent aggregateEvent)
+    {
+        var key = aggregateEvent.Key.GetType().Name;
+        var convertedRules = new List<IPrivacyRule>();
+        foreach (var rule in aggregateEvent.Rules)
+        {
+            switch (rule)
+            {
+                case TInputPrivacyValueAllowAll:
+                    convertedRules.Add(new TPrivacyValueAllowAll());
+                    break;
+                case TInputPrivacyValueAllowContacts:
+                    convertedRules.Add(new TPrivacyValueAllowContacts());
+                    break;
+                case TInputPrivacyValueAllowUsers allowUsers:
+                    var allowedUserIds = allowUsers.Users.Select(u => u switch { TInputUserSelf => aggregateEvent.UserId, TInputUser user => user.UserId, _ => 0L }).ToList();
+                    convertedRules.Add(new TPrivacyValueAllowUsers { Users = new TVector<long>(allowedUserIds) });
+                    break;
+                case TInputPrivacyValueDisallowAll:
+                    convertedRules.Add(new TPrivacyValueDisallowAll());
+                    break;
+                case TInputPrivacyValueDisallowContacts:
+                    convertedRules.Add(new TPrivacyValueDisallowContacts());
+                    break;
+                case TInputPrivacyValueDisallowUsers disallowUsers:
+                    var disallowedUserIds = disallowUsers.Users.Select(u => u switch { TInputUserSelf => aggregateEvent.UserId, TInputUser user => user.UserId, _ => 0L }).ToList();
+                    convertedRules.Add(new TPrivacyValueDisallowUsers { Users = new TVector<long>(disallowedUserIds) });
+                    break;
+            }
+        }
+        PrivacyRules[key] = convertedRules;
+    }
 
     public void Apply(CheckUserStatusCompletedEvent aggregateEvent)
     {
@@ -89,6 +126,11 @@ public class UserState : AggregateState<UserAggregate, UserId, UserState>,
         {
             PhotoId = aggregateEvent.PhotoId;
         }
+    }
+
+    public void Apply(UserScamStatusChangedEvent aggregateEvent)
+    {
+        Scam = aggregateEvent.Scam;
     }
 
     public void Apply(UserProfileUpdatedEvent aggregateEvent)
@@ -139,6 +181,8 @@ public class UserState : AggregateState<UserAggregate, UserId, UserState>,
         Birthday = snapshot.Birthday;
         ProfilePhotoUpdateDate = snapshot.ProfilePhotoUpdateDate;
         UserNameUpdateDate = snapshot.UserNameUpdateDate;
+        PrivacyRules = snapshot.PrivacyRules;
+        Scam = snapshot.Scam;
     }
 
     public void Apply(UserProfilePhotoUploadedEvent aggregateEvent)

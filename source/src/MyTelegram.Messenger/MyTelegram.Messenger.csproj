@@ -19,6 +19,8 @@
     <!--<ProjectReference Include="..\MyTelegram.ReadModel\MyTelegram.ReadModel.csproj" />-->
     <!--<ProjectReference Include="..\MyTelegram.ReadModel.MongoDB\MyTelegram.ReadModel.MongoDB.csproj" />-->
     <ProjectReference Include="..\MyTelegram.ReadModel.InMemory\MyTelegram.ReadModel.InMemory.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Newtonsoft.Json" />
 
   </ItemGroup>
 

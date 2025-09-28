@@ -1,4 +1,5 @@
 :: For more information,please visit https://github.com/loyldg/mytelegram
+set App__Brand=Opengram
 set App__QueryServerEventStoreDatabaseName=tg-1
 set App__QueryServerReadModelDatabaseName=tg-1
 set App__DatabaseName=tg
@@ -45,6 +46,7 @@ set App__Servers__3__Enabled=True
 :: set VonageSms__Enabled=False
 
 :: App
+:: set App__Brand=Opengram
 :: set App=
 :: set App__AllowedUserIds__0=2000001
 :: set App__AutoCreateSuperGroup=True

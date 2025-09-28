@@ -2,7 +2,8 @@
 
 namespace MyTelegram.Converters.TLObjects.LatestLayer;
 
-public class PremiumPromoConverter : IPremiumPromoConverter, ITransientDependency
+public class PremiumPromoConverter(IOptionsMonitor<MyTelegramDataSeederOptions> options) 
+    : IPremiumPromoConverter, ITransientDependency
 {
     
     public virtual int Layer => Layers.LayerLatest;
@@ -13,8 +14,7 @@ public class PremiumPromoConverter : IPremiumPromoConverter, ITransientDependenc
         {
             //Currency = "USD",
             //MonthlyAmount = 399,
-            StatusText =
-                "By subscribing to MyTelegram Premium you agree to the MyTelegram Terms of Service and Privacy Policy.",
+            StatusText = $"By subscribing to {options.CurrentValue.Brand} Premium you agree to the {options.CurrentValue.Brand} Terms of Service and Privacy Policy.",
             StatusEntities = new TVector<IMessageEntity>(),
             Users = new TVector<IUser>(),
             VideoSections = new TVector<string>(),
@@ -24,7 +24,7 @@ public class PremiumPromoConverter : IPremiumPromoConverter, ITransientDependenc
                 new TPremiumSubscriptionOption
                 {
                     Current = true,
-                    Amount = 399,
+                    Amount = 1488,
                     Currency = "USD",
                     Months = 1,
                     StoreProduct = "org.telegram.telegramPremium.monthly",

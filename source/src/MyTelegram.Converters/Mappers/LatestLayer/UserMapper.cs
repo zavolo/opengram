@@ -77,6 +77,7 @@ internal sealed class UserMapper
         destination.Verified = source.Verified;
         destination.Support = source.Support;
         destination.Premium = source.Premium;
+        destination.Scam = source.Scam;
         if (source.EmojiStatusDocumentId.HasValue)
         {
             if (source.EmojiStatusValidUntil.HasValue)

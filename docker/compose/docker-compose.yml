@@ -101,6 +101,8 @@ services:
     environment:
       Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
       ConnectionStrings__Default: ${ConnectionStrings__Default}
+      App__Brand: ${App__Brand}
+      App__ProtectedUsernames__0: ${App__ProtectedUsernames__0}
       App__DatabaseName: ${App__DatabaseName}
       App__ReadModelDatabaseName: ${App__ReadModelDatabaseName}
       App__CreateTestUsers: ${App__CreateTestUsers}
@@ -349,6 +351,9 @@ services:
     environment:
       Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
       ConnectionStrings__Default: ${ConnectionStrings__Default}
+      App__Brand: ${App__Brand}
+      App__WelcomeMsg: ${App__WelcomeMsg}
+      App__ProtectedUsernames__0: ${App__ProtectedUsernames__0}
       App__DatabaseName: ${App__DatabaseName}
       App__ReadModelDatabaseName: ${App__ReadModelDatabaseName}
       App__AccessHashSecretKey: ${App__AccessHashSecretKey}
@@ -443,6 +448,8 @@ services:
     environment:
       Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
       ConnectionStrings__Default: ${ConnectionStrings__Default}
+      App__Brand: ${App__Brand}
+      App__ProtectedUsernames__0: ${App__ProtectedUsernames__0}
       App__DatabaseName: ${App__DatabaseName}
       App__ReadModelDatabaseName: ${App__ReadModelDatabaseName}
       App__AccessHashSecretKey: ${App__AccessHashSecretKey}
@@ -535,6 +542,10 @@ services:
       - tg-net
     environment:
       Serilog__MinimumLevel__Default: ${Serilog__MinimumLevel__Default}
+      App__Brand: ${App__Brand}
+      WebSms__Enabled: ${WebSms__Enabled}
+      WebSms__CustomPhpApiUrl: ${WebSms__CustomPhpApiUrl}
+      WebSms__PhpApiServerKey: ${WebSms__PhpApiServerKey}
       # TwilioSms__Enabled: ${TwilioSms__Enabled}
       # TwilioSms__AccountSId: ${TwilioSms__AccountSId}
       # TwilioSms__AuthToken: ${TwilioSms__AuthToken}

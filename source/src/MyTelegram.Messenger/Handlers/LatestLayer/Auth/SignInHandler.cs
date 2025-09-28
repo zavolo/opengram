@@ -16,35 +16,95 @@
 internal sealed class SignInHandler(
     ICommandBus commandBus,
     ILogger<SignInHandler> logger,
-    IQueryProcessor queryProcessor)
+    IQueryProcessor queryProcessor,
+    IPhoneBlockingService phoneBlockingService)
     : RpcResultObjectHandler<MyTelegram.Schema.Auth.RequestSignIn, MyTelegram.Schema.Auth.IAuthorization>
 {
+    private const int MaxPhoneLength = 15;
+    private const int MaxPhoneCodeLength = 10;
+    private const int MaxPhoneCodeHashLength = 64;
+    
     protected override async Task<MyTelegram.Schema.Auth.IAuthorization> HandleCoreAsync(IRequestInput input,
         RequestSignIn obj)
     {
-        var userId = 0L;
-        var userReadModel = await queryProcessor
-                .ProcessAsync(new GetUserByPhoneNumberQuery(obj.PhoneNumber.ToPhoneNumber()), default)
-            ;
-        if (userReadModel == null)
+        try
         {
-            logger.LogInformation(
-                "Phone number: {PhoneNumber} does not exists, sign up required",
-                obj.PhoneNumber.ToPhoneNumber());
+            ValidateSignInRequest(obj);
+
+            if (await phoneBlockingService.IsPhoneBlockedAsync(obj.PhoneNumber))
+            {
+                RpcErrors.RpcErrors400.PhoneNumberBanned.ThrowRpcError();
+            }
+
+            var phoneNumber = obj.PhoneNumber.ToPhoneNumber();
+            var userId = 0L;
+            
+            var userReadModel = await queryProcessor
+                    .ProcessAsync(new GetUserByPhoneNumberQuery(phoneNumber), default);
+                    
+            if (userReadModel == null)
+            {
+                RpcErrors.RpcErrors400.PhoneNumberUnoccupied.ThrowRpcError();
+            }
+            else
+            {
+                userId = userReadModel.UserId;
+            }
+
+            var sanitizedPhoneCode = SanitizePhoneCode(obj.PhoneCode);
+            var command = new CheckSignInCodeCommand(
+                AppCodeId.Create(phoneNumber, obj.PhoneCodeHash),
+                input.ToRequestInfo() with { UserId = userId },
+                sanitizedPhoneCode,
+                userId
+            );
+
+            await commandBus.PublishAsync(command);
+
+            return null!;
         }
-        else
+        catch (Exception ex) when (!(ex is RpcException))
         {
-            userId = userReadModel.UserId;
+            logger.LogError(ex, "Unexpected error in SignIn for phone: {PhoneNumber}", obj.PhoneNumber);
+            RpcErrors.RpcErrors500.SignInFailed.ThrowRpcError();
+            throw;
         }
-
-        var command = new CheckSignInCodeCommand(AppCodeId.Create(obj.PhoneNumber.ToPhoneNumber(), obj.PhoneCodeHash),
-            input.ToRequestInfo() with { UserId = userId },
-            obj.PhoneCode ?? string.Empty,
-            userId
-        );
-
-        await commandBus.PublishAsync(command);
-
-        return null!;
+    }
+    
+    private void ValidateSignInRequest(RequestSignIn obj)
+    {
+        if (string.IsNullOrWhiteSpace(obj.PhoneNumber) || obj.PhoneNumber.Length > MaxPhoneLength)
+        {
+            RpcErrors.RpcErrors400.PhoneNumberInvalid.ThrowRpcError();
+        }
+        
+        if (string.IsNullOrWhiteSpace(obj.PhoneCode) || obj.PhoneCode.Length > MaxPhoneCodeLength)
+        {
+            RpcErrors.RpcErrors400.PhoneCodeEmpty.ThrowRpcError();
+        }
+        
+        if (string.IsNullOrWhiteSpace(obj.PhoneCodeHash) || obj.PhoneCodeHash.Length > MaxPhoneCodeHashLength)
+        {
+            RpcErrors.RpcErrors400.PhoneCodeEmpty.ThrowRpcError();
+        }
+        
+        if (!obj.PhoneCode.All(char.IsDigit))
+        {
+            RpcErrors.RpcErrors400.PhoneCodeInvalid.ThrowRpcError();
+        }
+        
+        if (!long.TryParse(obj.PhoneNumber, out var phoneNumberLong) || phoneNumberLong <= 0)
+        {
+            RpcErrors.RpcErrors400.PhoneNumberInvalid.ThrowRpcError();
+        }
+    }
+    
+    private string SanitizePhoneCode(string phoneCode)
+    {
+        if (string.IsNullOrEmpty(phoneCode))
+            return string.Empty;
+            
+        var sanitized = new string(phoneCode.Where(char.IsDigit).ToArray());
+        return sanitized.Length > MaxPhoneCodeLength ? sanitized.Substring(0, MaxPhoneCodeLength) : sanitized;
     }
 }

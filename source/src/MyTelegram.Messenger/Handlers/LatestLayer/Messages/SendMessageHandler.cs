@@ -143,9 +143,9 @@ internal sealed class SendMessageHandler(
                                 Url = $"{options.Value.JoinChatDomain}/+{link}",
                                 DisplayUrl = $"{options.Value.JoinChatDomain}/+{link}",
                                 Type = channelReadModel.Broadcast ? "telegram_channel" : "telegram_megagroup",
-                                SiteName = "MyTelegram",
+                                SiteName = options.Value.Brand,
                                 Title = channelReadModel.Title,
-                                Description = $"Join this group on MyTelegram.",
+                                Description = $"Join this group on {option.Value.Brand}.",
                             }
                         };
                     }
