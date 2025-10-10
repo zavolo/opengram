@@ -10,6 +10,7 @@
     <ProjectReference Include="..\MyTelegram.ReadModel.Interfaces\MyTelegram.ReadModel.Interfaces.csproj" />
     <ProjectReference Include="..\MyTelegram.Schema\MyTelegram.Schema.csproj" />
     <ProjectReference Include="..\MyTelegram.Services\MyTelegram.Services.csproj" />
+    <ProjectReference Include="..\MyTelegram.DataSeeder\MyTelegram.DataSeeder.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="Fody">

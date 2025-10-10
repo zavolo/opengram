@@ -19,7 +19,9 @@ public class UserReadModel : IUserReadModel,
     IAmReadModelFor<UserAggregate, UserId, PersonalChannelUpdatedEvent>,
     IAmReadModelFor<UserAggregate, UserId, BirthdayUpdatedEvent>,
     IAmReadModelFor<UserAggregate, UserId, UserAboutUpdatedEvent>,
-    IAmReadModelFor<UserAggregate, UserId, UserFirstNameUpdatedEvent>
+    IAmReadModelFor<UserAggregate, UserId, UserFirstNameUpdatedEvent>,
+    IAmReadModelFor<UserAggregate, UserId, UserScamStatusChangedEvent>,
+    IAmReadModelFor<UserAggregate, UserId, PrivacyRulesChangedEvent>
 {
     public virtual string? About { get; private set; }
     public virtual long AccessHash { get; private set; }
@@ -64,6 +66,8 @@ public class UserReadModel : IUserReadModel,
     public List<string>? Usernames { get; private set; }
     public int? UserNameUpdateDate { get; private set; }
     public bool? IsDeleted { get; set; }
+    public virtual bool IsBan { get; set; } = false;
+    public virtual bool Scam { get; private set; } = false;
     public virtual bool Verified { get; private set; }
 
     //public int? Color { get; private set; }
@@ -71,6 +75,51 @@ public class UserReadModel : IUserReadModel,
     public virtual long? Version { get; set; }
 
     public VideoSizeEmojiMarkup? VideoEmojiMarkup { get; private set; }
+
+    public Dictionary<string, List<IPrivacyRule>>? PrivacyRules { get; private set; } = new();
+
+    public Task ApplyAsync(IReadModelContext context, IDomainEvent<UserAggregate, UserId, PrivacyRulesChangedEvent> domainEvent, CancellationToken cancellationToken)
+    {
+        var key = domainEvent.AggregateEvent.Key.GetType().Name;
+        var convertedRules = new List<IPrivacyRule>();
+        foreach (var rule in domainEvent.AggregateEvent.Rules)
+        {
+            switch (rule)
+            {
+                case TInputPrivacyValueAllowAll:
+                    convertedRules.Add(new TPrivacyValueAllowAll());
+                    break;
+                case TInputPrivacyValueAllowContacts:
+                    convertedRules.Add(new TPrivacyValueAllowContacts());
+                    break;
+                case TInputPrivacyValueAllowUsers allowUsers:
+                    var allowedUserIds = allowUsers.Users.Select(u => u switch { TInputUserSelf => domainEvent.AggregateEvent.UserId, TInputUser user => user.UserId, _ => 0L }).ToList();
+                    convertedRules.Add(new TPrivacyValueAllowUsers { Users = new TVector<long>(allowedUserIds) });
+                    break;
+                case TInputPrivacyValueDisallowAll:
+                    convertedRules.Add(new TPrivacyValueDisallowAll());
+                    break;
+                case TInputPrivacyValueDisallowContacts:
+                    convertedRules.Add(new TPrivacyValueDisallowContacts());
+                    break;
+                case TInputPrivacyValueDisallowUsers disallowUsers:
+                    var disallowedUserIds = disallowUsers.Users.Select(u => u switch { TInputUserSelf => domainEvent.AggregateEvent.UserId, TInputUser user => user.UserId, _ => 0L }).ToList();
+                    convertedRules.Add(new TPrivacyValueDisallowUsers { Users = new TVector<long>(disallowedUserIds) });
+                    break;
+            }
+        }
+        PrivacyRules ??= new();
+        PrivacyRules[key] = convertedRules;
+        return Task.CompletedTask;
+    }
+
+    public Task ApplyAsync(IReadModelContext context,
+        IDomainEvent<UserAggregate, UserId, UserScamStatusChangedEvent> domainEvent,
+        CancellationToken cancellationToken)
+    {
+        Scam = domainEvent.AggregateEvent.Scam;
+        return Task.CompletedTask;
+    }
 
     public Task ApplyAsync(IReadModelContext context,
             IDomainEvent<MessageAggregate, MessageId, InboxMessagePinnedUpdatedEvent> domainEvent,

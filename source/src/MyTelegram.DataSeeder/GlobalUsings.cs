@@ -22,7 +22,7 @@ global using MyTelegram.Domain.Commands.User;
 global using MyTelegram.EventFlow;
 global using MyTelegram.EventFlow.Extensions;
 global using MyTelegram.EventFlow.MongoDB;
-global using MyTelegram.Messenger.NativeAot;
+global using MyTelegram.DataSeeder.NativeAot;
 global using MyTelegram.ReadModel.MongoDB;
 global using MyTelegram.Schema;
 global using MyTelegram.Services.Extensions;

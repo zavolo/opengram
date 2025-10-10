@@ -1,6 +1,6 @@
 ﻿using MyTelegram.Messenger.Services.Impl;
 using MyTelegram.Messenger.Services.Interfaces;
-namespace MyTelegram.Messenger.Handlers.LatestLayer.Impl.Auth;
+namespace MyTelegram.Messenger.Handlers.LatestLayer.Auth;
 
 ///<summary>
 /// Send the verification code for login
@@ -35,8 +35,7 @@ internal sealed class SendCodeHandler(
     IEventBus eventBus,
     IPhoneBlockingService phoneBlockingService,
     ILogger<SendCodeHandler> logger)
-    : RpcResultObjectHandler<Schema.Auth.RequestSendCode, Schema.Auth.ISentCode>,
-        Auth.ISendCodeHandler
+    : RpcResultObjectHandler<Schema.Auth.RequestSendCode, Schema.Auth.ISentCode>
 {
     private readonly int _maxFutureAuthTokens = 20;
     private readonly int _maxPhoneNumberLength = 15;
@@ -95,7 +94,7 @@ internal sealed class SendCodeHandler(
         catch (Exception ex) when (!(ex is RpcException))
         {
             logger.LogError(ex, "Unexpected error in SendCode for phone: {PhoneNumber}", obj.PhoneNumber);
-            RpcErrors.RpcErrors500.InternalError.ThrowRpcError();
+            RpcErrors.RpcErrors500.AuthRestart.ThrowRpcError();
             throw;
         }
     }
@@ -214,9 +213,9 @@ internal sealed class SendCodeHandler(
                 var limitedLogoutTokens = obj.Settings.LogoutTokens.Take(logoutTokensCount);
                 
                 var cacheKeys = limitedLogoutTokens.Take(_maxFutureAuthTokens)
-                    .Where(token => token != null && token.Length > 0)
+                    .Where(token => !token.IsEmpty)
                     .Select(p => FutureAuthTokenCacheItem.GetCacheKey(
-                        BitConverter.ToString(hashHelper.Sha1(p)).Replace("-", string.Empty)))
+                        BitConverter.ToString(hashHelper.Sha1(p.Span)).Replace("-", string.Empty)))
                     .ToList();
 
                 if (cacheKeys.Count > 0)

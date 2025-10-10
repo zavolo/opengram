@@ -46,7 +46,7 @@ public static class MyTelegramMessengerCommandServerExtensions
             {
                 jsonSerializerOptions.AddSingleValueObjects(
                     new EventFlow.SystemTextJsonSingleValueObjectConverter<CacheKey>());
-                jsonSerializerOptions.TypeInfoResolverChain.Add(MyMessengerJsonContext.Default);
+                jsonSerializerOptions.TypeInfoResolverChain.Add(global::MyTelegram.Messenger.NativeAot.MyMessengerJsonContext.Default);
             });
             configure?.Invoke(options);
         });

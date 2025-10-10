@@ -145,7 +145,7 @@ internal sealed class SendMessageHandler(
                                 Type = channelReadModel.Broadcast ? "telegram_channel" : "telegram_megagroup",
                                 SiteName = options.Value.Brand,
                                 Title = channelReadModel.Title,
-                                Description = $"Join this group on {option.Value.Brand}.",
+                                Description = $"Join this group on {options.Value.Brand}.",
                             }
                         };
                     }

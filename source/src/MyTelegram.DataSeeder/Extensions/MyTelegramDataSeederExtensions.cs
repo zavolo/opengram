@@ -1,5 +1,5 @@
 ﻿using MyTelegram.EventFlow.MongoDB.Extensions;
-using MyTelegram.Messenger.NativeAot;
+using MyTelegram.DataSeeder.NativeAot;
 using MyTelegram.QueryHandlers.MongoDB.ChatAdmin;
 using MyTelegram.QueryHandlers.MongoDB.User;
 using MyTelegram.QueryHandlers.MongoDB.UserName;
@@ -28,7 +28,7 @@ public static class MyTelegramDataSeederExtensions
                 jsonSerializerOptions.AddSingleValueObjects(
                     new SystemTextJsonSingleValueObjectConverter<CacheKey>());
                 jsonSerializerOptions.TypeInfoResolverChain.Add(MyJsonSerializeContext.Default);
-                jsonSerializerOptions.TypeInfoResolverChain.Add(MyMessengerJsonContext.Default);
+                jsonSerializerOptions.TypeInfoResolverChain.Add(MyDataSeederJsonContext.Default);
             });
             configure?.Invoke(options);
         });

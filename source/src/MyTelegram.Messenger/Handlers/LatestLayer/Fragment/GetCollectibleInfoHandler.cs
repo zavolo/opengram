@@ -2,7 +2,7 @@
 using MyTelegram.Schema.Fragment;
 using MyTelegram.Messenger.Services.Interfaces;
 
-namespace MyTelegram.Messenger.Handlers.LatestLayer.Impl.Fragment;
+namespace MyTelegram.Messenger.Handlers.LatestLayer.Fragment;
 
 ///<summary>
 /// Fetch information about a <a href="https://corefork.telegram.org/api/fragment#fetching-info-about-fragment-collectibles">fragment collectible, see here »</a> for more info on the full flow.
@@ -16,8 +16,7 @@ internal sealed class GetCollectibleInfoHandler(
     IUserAppService userAppService,
     IQueryProcessor queryProcessor,
     ILogger<GetCollectibleInfoHandler> logger) 
-    : RpcResultObjectHandler<MyTelegram.Schema.Fragment.RequestGetCollectibleInfo, MyTelegram.Schema.Fragment.ICollectibleInfo>,
-    Fragment.IGetCollectibleInfoHandler
+    : RpcResultObjectHandler<MyTelegram.Schema.Fragment.RequestGetCollectibleInfo, MyTelegram.Schema.Fragment.ICollectibleInfo>
 {
     private const int MaxUsernameLength = 32;
     
@@ -106,12 +105,12 @@ internal sealed class GetCollectibleInfoHandler(
     {
         try
         {
-            var collectibleInfo = await queryProcessor.ProcessAsync(
-                new GetCollectibleUsernameByUsernameQuery(username));
+            var userNameReadModel = await queryProcessor.ProcessAsync(
+                new GetUserNameByNameQuery(username));
                 
-            if (collectibleInfo != null && collectibleInfo.OwnerPeerId == userId)
+            if (userNameReadModel != null)
             {
-                return collectibleInfo.CreationTime?.ToTimestamp() ?? CurrentDate;
+                return userNameReadModel.Date;
             }
             
             var user = await userAppService.GetAsync(userId);

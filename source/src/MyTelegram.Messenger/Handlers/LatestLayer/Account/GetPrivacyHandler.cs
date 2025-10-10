@@ -1,7 +1,7 @@
 ﻿// ReSharper disable All
 using MyTelegram.Messenger.Services.Interfaces;
 
-namespace MyTelegram.Messenger.Handlers.LatestLayer.Impl.Account;
+namespace MyTelegram.Messenger.Handlers.LatestLayer.Account;
 
 ///<summary>
 /// Get privacy settings of current account
@@ -13,8 +13,7 @@ namespace MyTelegram.Messenger.Handlers.LatestLayer.Impl.Account;
 internal sealed class GetPrivacyHandler(
     IPrivacyAppService privacyAppService,
     IUserAppService userAppService) 
-    : RpcResultObjectHandler<MyTelegram.Schema.Account.RequestGetPrivacy, MyTelegram.Schema.Account.IPrivacyRules>,
-    Account.IGetPrivacyHandler
+    : RpcResultObjectHandler<MyTelegram.Schema.Account.RequestGetPrivacy, MyTelegram.Schema.Account.IPrivacyRules>
 {
     protected override async Task<MyTelegram.Schema.Account.IPrivacyRules> HandleCoreAsync(IRequestInput input,
         MyTelegram.Schema.Account.RequestGetPrivacy obj)

@@ -2,7 +2,7 @@
 // ReSharper disable All
 using System.Text.Json.Serialization;
 
-namespace MyTelegram.Messenger.NativeAot;
+namespace MyTelegram.DataSeeder.NativeAot;
 
 #if !DEBUG
 
@@ -334,6 +334,6 @@ namespace MyTelegram.Messenger.NativeAot;
 [JsonSerializable(typeof(global::EventFlow.MongoDB.ValueObjects.MongoDbSnapshotDataModel))]
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
-public partial class MyMessengerJsonContext : JsonSerializerContext
+public partial class MyDataSeederJsonContext : JsonSerializerContext
 {
 }

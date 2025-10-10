@@ -1,4 +1,5 @@
-﻿namespace MyTelegram.SmsSender.EventHandlers;
+﻿using Microsoft.Extensions.Options;
+namespace MyTelegram.SmsSender.EventHandlers;
 
 public class AppCodeEventHandler(
     ISmsSenderFactory smsSenderFactory,

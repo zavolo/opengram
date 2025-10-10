@@ -1,5 +1,5 @@
 ﻿using MyTelegram.Messenger.Services.Interfaces;
-namespace MyTelegram.Messenger.Handlers.LatestLayer.Impl.Auth;
+namespace MyTelegram.Messenger.Handlers.LatestLayer.Auth;
 
 ///<summary>
 /// Registers a validated phone number in the system.
@@ -21,8 +21,7 @@ internal sealed class SignUpHandler(
     IQueryProcessor queryProcessor,
     IPhoneBlockingService phoneBlockingService,
     ILogger<SignUpHandler> logger)
-    : RpcResultObjectHandler<MyTelegram.Schema.Auth.RequestSignUp, MyTelegram.Schema.Auth.IAuthorization>,
-        Auth.ISignUpHandler
+    : RpcResultObjectHandler<MyTelegram.Schema.Auth.RequestSignUp, MyTelegram.Schema.Auth.IAuthorization>
 {
     private const int MaxNameLength = 64;
     private const int MaxPhoneLength = 15;
@@ -67,8 +66,8 @@ internal sealed class SignUpHandler(
         catch (Exception ex) when (!(ex is RpcException))
         {
             logger.LogError(ex, "Unexpected error in SignUp for phone: {PhoneNumber}", obj.PhoneNumber);
-            RpcErrors.RpcErrors500.InternalError.ThrowRpcError();
-            throw;
+            RpcErrors.RpcErrors400.PhoneNumberFlood.ThrowRpcError();
+            return null!;
         }
     }
     

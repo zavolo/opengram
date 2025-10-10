@@ -1,4 +1,6 @@
-﻿namespace MyTelegram.Messenger.Handlers.LatestLayer.Account;
+﻿using MyTelegram.DataSeeder;
+
+namespace MyTelegram.Messenger.Handlers.LatestLayer.Account;
 
 ///<summary>
 /// Validates a username and checks availability.
